@@ -18,6 +18,8 @@ defmodule OpenGraphPreviewerWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+
+    post "/submit", PageController, :submit
   end
 
   # Other scopes may use custom stacks.
