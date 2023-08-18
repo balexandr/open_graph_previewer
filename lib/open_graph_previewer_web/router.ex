@@ -20,6 +20,7 @@ defmodule OpenGraphPreviewerWeb.Router do
     get "/", PageController, :home
     get "/url", PageController, :home
     get "/url/:url", PageController, :url
+    get "/poll-status", PageController, :poll_status
 
     post "/submit", PageController, :submit
   end

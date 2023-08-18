@@ -62,3 +62,49 @@
     </div>
   </div>
 </div>
+
+<script>
+  const image = document.getElementById("image");
+  const url = unescape(window.location.pathname.split('/')[2]);
+  
+  // Quick Axios script to handle retrieving the image
+  function pollStatus(counter) {
+    const url = unescape(window.location.pathname.split('/')[2]);
+    if (url === undefined) {
+      return;
+    }
+
+    // API call to the back-end to poll changes until image is fully processed
+    let res = axios({
+          url: 'http://localhost:4000/poll-status?url=' + encodeURIComponent(url),
+          method: 'get',
+          timeout: 500,
+          headers: {
+              'Content-Type': 'application/json',
+          }
+      }).then(function (response) {
+        // When image is marked as "done" in the DB and under 5 attempts otherwise output image not found
+        if (response.data["status"] == "processing" && counter < 5) {
+          setTimeout(function() {
+            pollStatus(counter + 1);
+          }, 500);
+        } else {
+          const image = document.createElement("img");
+          const imageContainer = document.getElementById("imageContainer")
+          if (response.data["image"]) {
+            image.src = response.data["image"];
+          } else {
+            image.src = 'https://upload.wikimedia.org/wikipedia/commons/d/d1/Image_not_available.png';
+          }
+          imageContainer.appendChild(image);
+        }  
+      }) 
+  }
+
+  // if /url/ param is present, start polling
+  if (!image && url !== "undefined") {
+    setTimeout(function() {
+      pollStatus(1);
+    }, 500);
+  }
+</script>

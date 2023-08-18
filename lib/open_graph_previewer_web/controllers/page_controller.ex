@@ -66,6 +66,21 @@ defmodule OpenGraphPreviewerWeb.PageController do
     end
   end
 
+  @doc """
+  Look up by URL, poll status, stop polling when status is "done"
+  """
+  @spec poll_status(Plug.Conn.t(), Map.t()) :: %{}
+  def poll_status(conn, %{"url" => url}) do
+    case Url.get(url) do
+      %Url{status: "done", image: image} -> json(conn, %{status: "done", image: image})
+      _ -> json(conn, %{status: "processing", image: nil})
+    end
+  end
+
+  ###########
+  # Private #
+  ###########
+
   @spec image_handler(String.t(), %Url{}) :: String.t() | nil
   defp image_handler(url, stored_url) do
     image = fetch_image_from_url(url)
