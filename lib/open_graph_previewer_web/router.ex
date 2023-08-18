@@ -18,6 +18,8 @@ defmodule OpenGraphPreviewerWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+    get "/url", PageController, :home
+    get "/url/:url", PageController, :url
 
     post "/submit", PageController, :submit
   end
