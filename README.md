@@ -59,12 +59,15 @@ shows a missing image. To avoid endless calls, I capped the polling at 5 times w
 - Non-URL input
 - Duplicate entries don't create new DB rows
 
+## Automated testing done
+- Added a few controller level tests to ensure general stability
+
 ## Notes
 If more time was allotted, I would have...
 
 - moved a lot of the controller logic into a context file to separate it and keep the controller clean.
   I figured it'd be easier to read/assess in one file
-- written automated tests!
+- written more automated tests!
 - Focus on a bug where some specific URLs i.e. linkedin.com returns no og:image,
   but upon clearing the DB row and trying again it works
 
