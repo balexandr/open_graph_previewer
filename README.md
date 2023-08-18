@@ -68,7 +68,8 @@ If more time was allotted, I would have...
 - moved a lot of the controller logic into a context file to separate it and keep the controller clean.
   I figured it'd be easier to read/assess in one file
 - written more automated tests!
-- Focus on a bug where some specific URLs i.e. linkedin.com returns no og:image,
+- Focus on a bug where very few specific URLs i.e. https://www.linkedin.com returns no og:image,
   but upon clearing the DB row and trying again it works
+  - Lastly, add more JS to change "Check Website" to "Checking..." while it's processing to let the user know whats going on
 
 Thank you for taking the time to read my application!
