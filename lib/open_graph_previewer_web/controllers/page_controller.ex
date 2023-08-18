@@ -1,6 +1,8 @@
 defmodule OpenGraphPreviewerWeb.PageController do
   use OpenGraphPreviewerWeb, :controller
 
+  alias OpenGraphPreviewer.Url, as: Url
+
   @doc """
   Default landing page
   """
@@ -17,7 +19,14 @@ defmodule OpenGraphPreviewerWeb.PageController do
   def url(conn, %{"url" => url}) do
     image =
       if valid_url?(url) do
-        image_handler(url)
+        case Url.get(url) do
+          nil ->
+            {:ok, stored_url} = Url.insert(%{url: url, status: "processing"})
+            image_handler(url, stored_url)
+
+          %{image: url_image} ->
+            url_image
+        end
       else
         nil
       end
@@ -37,7 +46,15 @@ defmodule OpenGraphPreviewerWeb.PageController do
   def submit(conn, %{"params" => %{"url" => url}}) do
     case valid_url?(url) do
       true ->
-        image_handler(url)
+        {:ok, stored_url} =
+          case Url.get(url) do
+            nil -> Url.insert(%{url: url, status: "processing"})
+            stored_url -> {:ok, stored_url}
+          end
+
+        Task.async(fn ->
+          image_handler(url, stored_url)
+        end)
 
         conn
         |> redirect(to: ~p"/url/#{url}")
@@ -49,23 +66,24 @@ defmodule OpenGraphPreviewerWeb.PageController do
     end
   end
 
-  @doc """
-  Take a 'url' string and fetch the image
-  """
-  @spec image_handler(String.t()) :: String.t() | nil
-  defp image_handler(url) do
+  @spec image_handler(String.t(), %Url{}) :: String.t() | nil
+  defp image_handler(url, stored_url) do
     image = fetch_image_from_url(url)
+
+    case Url.update(stored_url, %{image: image, status: "done"}) do
+      {:ok, %{image: stored_image}} -> stored_image
+      {:error, _} -> image
+    end
   end
 
-  @doc """
-  Fetch the og:image from the URL or return nil
-  """
   @spec fetch_image_from_url(String.t()) :: String.t() | nil
   defp fetch_image_from_url(nil), do: nil
 
   defp fetch_image_from_url(url) do
     case HTTPoison.get(url) do
       {:ok, %{status_code: 301, headers: headers}} ->
+        # Sometimes the url data is "Location" or "location"
+        # This is in place to remove that obstacle
         headers =
           headers
           |> Enum.into(%{})
@@ -82,9 +100,6 @@ defmodule OpenGraphPreviewerWeb.PageController do
     end
   end
 
-  @doc """
-  Extract the og:image content value from HTML body
-  """
   @spec parse_image(String.t()) :: String.t() | nil
   defp parse_image(html) do
     html
@@ -94,9 +109,6 @@ defmodule OpenGraphPreviewerWeb.PageController do
     |> Enum.at(0)
   end
 
-  @doc """
-  Validate the formatting of the URL being passed in
-  """
   @spec valid_url?(String.t()) :: Boolean.t()
   defp valid_url?(url) do
     regexp =
